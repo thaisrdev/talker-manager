@@ -7,6 +7,7 @@ app.use(express.json());
 const PORT = '3000';
 const HTTP_OK_STATUS = 200;
 const HTTP_CREATED = 201;
+const NO_CONTENT = 204;
 const BAD_REQUEST = 400;
 const UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
@@ -86,49 +87,6 @@ const getToken = () => (+new Date() * Math.random()).toString(10).substring(0, 1
 const path = 'src/talker.json';
 const format = 'utf-8';
 
-// não remova esse endpoint, e para o avaliador funcionar
-app.get('/', (_request, response) => {
-  response.status(HTTP_OK_STATUS).send();
-});
-
-app.get('/talker', async (req, res) => {
-  const promise = await fs.readFile(path, format);
-  const data = JSON.parse(promise);
-  res.status(HTTP_OK_STATUS).json(data);
-});
-
-app.get('/talker/:id', async (req, res) => {
-  const { id } = req.params;
-  const promise = await fs.readFile(path, format);
-  const data = JSON.parse(promise);
-  const findId = data.find((e) => Number(e.id) === Number(id));
-  if (findId) return res.status(HTTP_OK_STATUS).json(findId);
-  return res.status(HTTP_NOT_FOUND).json(NOT_FOUND_MESSAGE);
-});
-
-app.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const token = getToken();
-  // const emailValidation = email.value.match(regexEmail);
-  if (!email) {
-    return res.status(BAD_REQUEST).json(EMPTY_EMAIL_MESSAGE);
-  }
-  if (!password) {
-    return res.status(BAD_REQUEST).json(EMPTY_PASSWORD_MESSAGE);
-  }
-  if (password.length < 6) {
-    return res.status(BAD_REQUEST).json(SHORT_PASSWORD_MESSAGE);
-  }
-  if (!(email.toLowerCase().match(regexEmail))) {
-    return res.status(BAD_REQUEST).json(EMAIL_VALIDATION_MESSAGE);
-  }
-  res.status(HTTP_OK_STATUS).json({ token });
-});
-
-//
-
-//
-
 const validateToken = (token, res) => {
   if (token === undefined) return res.status(UNAUTHORIZED).json(TOKEN_NOT_FOUND);
   if (typeof token !== 'string') return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
@@ -159,6 +117,46 @@ const validateRate = (talk, res) => {
   if (rate < 1 || rate > 5) return res.status(BAD_REQUEST).json(INVALID_RATE);
   if (!(Number.isInteger(rate))) return res.status(BAD_REQUEST).json(INVALID_RATE);
 };
+
+// não remova esse endpoint, e para o avaliador funcionar
+app.get('/', (_request, response) => {
+  response.status(HTTP_OK_STATUS).send();
+});
+
+app.get('/talker', async (req, res) => {
+  const promise = await fs.readFile(path, format);
+  const data = JSON.parse(promise);
+  res.status(HTTP_OK_STATUS).json(data);
+  if (promise === null) return [];
+});
+
+app.get('/talker/:id', async (req, res) => {
+  const { id } = req.params;
+  const promise = await fs.readFile(path, format);
+  const data = JSON.parse(promise);
+  const findId = data.find((e) => Number(e.id) === Number(id));
+  if (findId) return res.status(HTTP_OK_STATUS).json(findId);
+  return res.status(HTTP_NOT_FOUND).json(NOT_FOUND_MESSAGE);
+});
+
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  const token = getToken();
+  // const emailValidation = email.value.match(regexEmail);
+  if (!email) {
+    return res.status(BAD_REQUEST).json(EMPTY_EMAIL_MESSAGE);
+  }
+  if (!password) {
+    return res.status(BAD_REQUEST).json(EMPTY_PASSWORD_MESSAGE);
+  }
+  if (password.length < 6) {
+    return res.status(BAD_REQUEST).json(SHORT_PASSWORD_MESSAGE);
+  }
+  if (!(email.toLowerCase().match(regexEmail))) {
+    return res.status(BAD_REQUEST).json(EMAIL_VALIDATION_MESSAGE);
+  }
+  res.status(HTTP_OK_STATUS).json({ token });
+});
 
 app.post('/talker', async (req, res) => {
   const { headers: { authorization } } = req;
@@ -199,8 +197,17 @@ app.put('/talker/:id', async (req, res) => {
   } catch (error) { console.error(error); }
   });
 
-// app.delete('/talker/:id', async() => {
-// });
+app.delete('/talker/:id', async (req, res) => {
+  const { headers: { authorization }, params: { id } } = req;
+  try {
+    validateToken(authorization, res);
+    const data = await fs.readFile(path, format);
+  const talkers = JSON.parse(data);
+  const newData = talkers.filter((e) => e.id !== Number(id));
+  await fs.writeFile(path, JSON.stringify(newData));
+  return res.status(NO_CONTENT).send();
+  } catch (error) { console.error(error); }
+});
 
 app.listen(PORT, () => {
   console.log('Online');
