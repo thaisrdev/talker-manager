@@ -139,6 +139,19 @@ app.get('/talker/:id', async (req, res) => {
   return res.status(HTTP_NOT_FOUND).json(NOT_FOUND_MESSAGE);
 });
 
+app.get('/talker/search', async (req, res) => {
+  const { headers: { authorization }, query: { q } } = req;
+  try {
+    validateToken(authorization, res);
+    const data = await fs.readFile(path, format);
+    const talkers = JSON.parse(data);
+    const result = talkers.filter((e) => e.name.includes(q));
+    if (!q) return res.status(HTTP_OK_STATUS).send(talkers);
+    if (!result) return res.status(HTTP_OK_STATUS).send([]);
+    return res.status(HTTP_OK_STATUS).send(result);
+  } catch (error) { console.error(error); }
+});
+
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
   const token = getToken();
@@ -175,19 +188,6 @@ app.post('/talker', async (req, res) => {
   } catch (error) {
     console.error(error);
   }
-});
-
-app.get('/talker/search', async (req, res) => {
-  const { headers: { authorization }, query: { q } } = req;
-  try {
-    validateToken(authorization, res);
-    const data = await fs.readFile(path, format);
-    const talkers = JSON.parse(data);
-    const result = talkers.filter((e) => e.name.includes(q));
-    if (!q) return res.status(HTTP_OK_STATUS).send(talkers);
-    if (!result) return res.status(HTTP_OK_STATUS).send([]);
-    return res.status(HTTP_OK_STATUS).send(result);
-  } catch (error) { console.error(error); }
 });
 
 app.put('/talker/:id', async (req, res) => {
