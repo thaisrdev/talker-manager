@@ -11,6 +11,9 @@ const BAD_REQUEST = 400;
 const UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
 
+const path = 'src/talker.json';
+const format = 'utf-8';
+
 const NOT_FOUND_MESSAGE = {
   message: 'Pessoa palestrante não encontrada',
 };
@@ -89,14 +92,14 @@ app.get('/', (_request, response) => {
 });
 
 app.get('/talker', async (req, res) => {
-  const promise = await fs.readFile('src/talker.json', 'utf-8');
+  const promise = await fs.readFile(path, format);
   const data = JSON.parse(promise);
   res.status(HTTP_OK_STATUS).json(data);
 });
 
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
-  const promise = await fs.readFile('src/talker.json', 'utf-8');
+  const promise = await fs.readFile(path, format);
   const data = JSON.parse(promise);
   const findId = data.find((e) => Number(e.id) === Number(id));
   if (findId) return res.status(HTTP_OK_STATUS).json(findId);
@@ -124,36 +127,28 @@ app.post('/login', (req, res) => {
 
 //
 
-//
-
 const tokenValidation = (token, res) => {
-  const tokenLength = 16;
-  if (!token) {
-    return res.status(UNAUTHORIZED).json(TOKEN_NOT_FOUND);
-  }
-  if ((typeof token !== 'string') || (token.length !== tokenLength)) {
-    return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
-  }
+  if (!token) return res.status(UNAUTHORIZED).json(TOKEN_NOT_FOUND);
+  if (typeof token !== 'string') return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
+  if (token.length !== 16) return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
 };
 
 const nameValidation = (name, res) => {
-  const minName = 3;
   if (!name) return res.status(BAD_REQUEST).json(NAME_EMPTY);
-  if (name.length < minName) return res.status(BAD_REQUEST).json(NAME_MIN);
+  if (name.length < 3) res.status(BAD_REQUEST).json(NAME_MIN);
 };
 
 const ageValidation = (age, res) => {
-  const minAge = 18;
   if (!age) return res.status(BAD_REQUEST).json(AGE_EMPTY);
-  if (age < minAge) return res.status(BAD_REQUEST).json(AGE_MIN);
+  if (age < 18) return res.status(BAD_REQUEST).json(AGE_MIN);
 };
 
 const dateValidation = (talk, res) => {
   const { watchedAt } = talk;
-  const date = watchedAt.match(regexDate);
- if (!talk) return res.status(BAD_REQUEST).json(TALK_EMPTY); 
+  const formatDate = watchedAt.match(regexDate);
+ if (!talk) return res.status(BAD_REQUEST).json(TALK_EMPTY);
  if (!watchedAt) return res.status(BAD_REQUEST).json(DATE_EMPTY);
- if (!date) return res.status(BAD_REQUEST).json(INVALID_DATE);
+ if (!formatDate) return res.status(BAD_REQUEST).json(INVALID_DATE);
 };
 
 const rateValidation = (talk, res) => {
@@ -172,10 +167,10 @@ app.post('/talker', async (req, res) => {
   ageValidation(age, res);
   dateValidation(talk, res);
   rateValidation(talk, res);
-  const promise = await fs.readFile('src/talker.json', 'utf-8');
+  const promise = await fs.readFile(path, format);
   const data = JSON.parse(promise);
   const newData = [...data, { name, id: data.length + 1, age, talk }];
-  await fs.writeFile('src/talker.json', JSON.stringify(newData));
+  await fs.writeFile(path, JSON.stringify(newData));
   return res.status(HTTP_CREATED).json({ name, id: data.length + 1, age, talk });
   } catch (error) {
     console.error(error);
