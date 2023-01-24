@@ -83,20 +83,23 @@ const getToken = () => (+new Date() * Math.random()).toString(10).substring(0, 1
 // Fonte do Token = https://stackoverflow.com/questions/20728783/shortest-code-to-get-random-string-of-numbers-and-letters 
 // Fonte Regex = https://stackoverflow.com/questions/5465375/javascript-date-regex-dd-mm-yyyy
 
+const path = 'src/talker.json';
+const format = 'utf-8';
+
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
   response.status(HTTP_OK_STATUS).send();
 });
 
 app.get('/talker', async (req, res) => {
-  const promise = await fs.readFile('src/talker.json', 'utf-8');
+  const promise = await fs.readFile(path, format);
   const data = JSON.parse(promise);
   res.status(HTTP_OK_STATUS).json(data);
 });
 
 app.get('/talker/:id', async (req, res) => {
   const { id } = req.params;
-  const promise = await fs.readFile('src/talker.json', 'utf-8');
+  const promise = await fs.readFile(path, format);
   const data = JSON.parse(promise);
   const findId = data.find((e) => Number(e.id) === Number(id));
   if (findId) return res.status(HTTP_OK_STATUS).json(findId);
@@ -166,10 +169,10 @@ app.post('/talker', async (req, res) => {
   validateAge(age, res);
   validateTalk(talk, res);
   validateRate(talk, res);
-  const data = await fs.readFile('src/talker.json', 'utf-8');
+  const data = await fs.readFile(path, format);
   const talkers = JSON.parse(data);
   const newData = [...talkers, { name, id: talkers.length + 1, age, talk }];
-  await fs.writeFile('src/talker.json', JSON.stringify(newData));
+  await fs.writeFile(path, JSON.stringify(newData));
   return res.status(HTTP_CREATED).json({ name, id: talkers.length + 1, age, talk });
   } catch (error) {
     console.error(error);
@@ -185,13 +188,13 @@ app.put('/talker/:id', async (req, res) => {
   validateAge(age, res);
   validateTalk(talk, res);
   validateRate(talk, res);
-  const data = await fs.readFile('src/talker.json', 'utf-8');
+  const data = await fs.readFile(path, format);
   const talkers = JSON.parse(data);
   const newData = talkers.map((element) => {
     if (element.id === Number(id)) return { name, id: Number(id), age, talk };
     return element;
   });
-  await fs.writeFile('src/talker.json', JSON.stringify(newData));
+  await fs.writeFile(path, JSON.stringify(newData));
   return res.status(HTTP_OK_STATUS).json({ name, id: Number(id), age, talk });
   } catch (error) { console.error(error); }
   });
