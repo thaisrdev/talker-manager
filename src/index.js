@@ -127,7 +127,7 @@ app.post('/login', (req, res) => {
 //
 
 const validateToken = (token, res) => {
-  if (!token) return res.status(UNAUTHORIZED).json(TOKEN_NOT_FOUND);
+  if (token === undefined) return res.status(UNAUTHORIZED).json(TOKEN_NOT_FOUND);
   if (typeof token !== 'string') return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
   if (token.length !== 16) return res.status(UNAUTHORIZED).json(INVALID_TOKEN);
 };
@@ -138,7 +138,7 @@ const validateName = (name, res) => {
 };
 
 const validateAge = (age, res) => {
-  if (!age) return res.status(BAD_REQUEST).json(AGE_EMPTY);
+  if (age === undefined) return res.status(BAD_REQUEST).json(AGE_EMPTY);
   if (age < 18) res.status(BAD_REQUEST).json(AGE_MIN);
 };
 
@@ -152,9 +152,9 @@ const validateTalk = (talk, res) => {
 
 const validateRate = (talk, res) => {
   const { rate } = talk;
-  if (!rate) return res.status(BAD_REQUEST).json(RATE_EMPTY);
+  if (rate === undefined) return res.status(BAD_REQUEST).json(RATE_EMPTY);
   if (rate < 1 || rate > 5) return res.status(BAD_REQUEST).json(INVALID_RATE);
-  if (!Number.isInteger(rate)) return res.status(BAD_REQUEST).json(INVALID_RATE);
+  if (!(Number.isInteger(rate))) return res.status(BAD_REQUEST).json(INVALID_RATE);
 };
 
 app.post('/talker', async (req, res) => {
@@ -175,6 +175,26 @@ app.post('/talker', async (req, res) => {
     console.error(error);
   }
 });
+
+app.put('/talker/:id', async (req, res) => {
+  const { headers: { authorization }, params: { id } } = req;
+  const { body: { name, age, talk } } = req;
+  try {
+  validateToken(authorization, res);
+  validateName(name, res);
+  validateAge(age, res);
+  validateTalk(talk, res);
+  validateRate(talk, res);
+  const data = await fs.readFile('src/talker.json', 'utf-8');
+  const talkers = JSON.parse(data);
+  const newData = talkers.map((element) => {
+    if (element.id === Number(id)) return { name, id: Number(id), age, talk };
+    return element;
+  });
+  await fs.writeFile('src/talker.json', JSON.stringify(newData));
+  return res.status(HTTP_OK_STATUS).json({ name, id: Number(id), age, talk });
+  } catch (error) { console.error(error); }
+  });
 
 // app.delete('/talker/:id', async() => {
 // });
