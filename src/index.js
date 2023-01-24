@@ -130,15 +130,6 @@ app.get('/talker', async (req, res) => {
   if (promise === null) return [];
 });
 
-app.get('/talker/:id', async (req, res) => {
-  const { id } = req.params;
-  const promise = await fs.readFile(path, format);
-  const data = JSON.parse(promise);
-  const findId = data.find((e) => Number(e.id) === Number(id));
-  if (findId) return res.status(HTTP_OK_STATUS).json(findId);
-  return res.status(HTTP_NOT_FOUND).json(NOT_FOUND_MESSAGE);
-});
-
 app.get('/talker/search', async (req, res) => {
   const { headers: { authorization }, query: { q } } = req;
   try {
@@ -150,6 +141,15 @@ app.get('/talker/search', async (req, res) => {
     if (!result) return res.status(HTTP_OK_STATUS).send([]);
     return res.status(HTTP_OK_STATUS).send(result);
   } catch (error) { console.error(error); }
+});
+
+app.get('/talker/:id', async (req, res) => {
+  const { id } = req.params;
+  const promise = await fs.readFile(path, format);
+  const data = JSON.parse(promise);
+  const findId = data.find((e) => Number(e.id) === Number(id));
+  if (findId) return res.status(HTTP_OK_STATUS).json(findId);
+  return res.status(HTTP_NOT_FOUND).json(NOT_FOUND_MESSAGE);
 });
 
 app.post('/login', (req, res) => {
@@ -225,4 +225,3 @@ app.delete('/talker/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log('Online');
 });
-//
